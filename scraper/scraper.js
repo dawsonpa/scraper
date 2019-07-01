@@ -60,11 +60,8 @@ function run(term) {
                 return axios.get(url)
                     .then(response => {
                         const $ = cheerio.load(response.data)
-                        const htmlTextArr = $('html *').contents().map(function() {
-                            return (this.type === 'text') ? $(this).text() + ' ' : '';
-                        }).get();
-                        console.log(htmlTextArr, 'html')
-
+                        const htmlText = $('html *').text()
+                        const is
                     })
                     .catch(err  => {
                         console.error(`There was trouble trying to scrape  ${url}`, err)
