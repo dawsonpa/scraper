@@ -25,50 +25,52 @@ const xml2js = require('xml2js')
 //
 // }
 
-// const generator = SiteMapGenerator('https://www.moovweb.com/', {
-//     stripQuerystring: false
-// })
-//
-// generator.on('done', () => {
-//     console.log('done')
-// })
-//
-// generator.start()
 
+function run(webpage, term) {
+    const generator = SiteMapGenerator(webpage, {
+        stripQuerystring: false
+    })
 
-function getURlsFromXML(){
-
+    generator.on('done', () => {
+        main(term)
+    })
+    console.log('Creating the site map. Please wait this could take several minutes depending on the site.')
+    generator.start()
 }
 
-function getPageHTML(url) {
-
-}
-
-function checkPageForKeyWord(keyWord) {
-
-}
-
-function run(term) {
+function main(term) {
     const parser = new xml2js.Parser();
     const xmlData = fs.readFile(__dirname +  '/sitemap.xml', (err, data) => {
         parser.parseString(data, (err, result) => {
             console.log('...xml parsed...');
-            const totalScraped = 0;
-            const pagesWithKeyWord = 0;
+            let totalScraped = 0;
+            let pagesWithKeyWord = 0;
+            const successArr = []
             return BluePromise.map(result.urlset.url, urlObj => {
                 const url = urlObj.loc[0];
                 return axios.get(url)
                     .then(response => {
-                        const $ = cheerio.load(response.data)
-                        const htmlText = $('html *').text()
-                        const is
+                        const $ = cheerio.load(response.data);
+                        const htmlText = $('html *').text();
+                        const isText = htmlText.search(term);
+                        if(isText !== -1) {
+                            const context = htmlText.slice(isText - 20, isText + 50 )
+                            console.log(url, context);
+                            pagesWithKeyWord++
+                        } else {
+                            // console.log(`${url} does not contain ${term}`)
+                        }
+                        totalScraped++
                     })
                     .catch(err  => {
                         console.error(`There was trouble trying to scrape  ${url}`, err)
                     })
+            }). then(() => {
+                console.log(`Crawled ${totalScraped}. Found ${pagesWithKeyWord} with the term '${term}'`)
             })
         })
     })
 }
+console.log(process.argv[2], process.argv[3])
 
-run()
+run(process.argv[2], process.argv[3])
